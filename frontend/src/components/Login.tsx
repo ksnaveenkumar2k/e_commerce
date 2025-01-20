@@ -20,10 +20,16 @@ const Login: React.FC = () => {
     try {
       const response = await axios.post("http://localhost:8000/api/login/", formData);
       console.log(response.data);
-      // Assuming response contains a valid authentication token or user data
+      // Assuming response contains the user data with role
       if (response.status === 200) {
-        // Redirect to the home page on successful login
-        navigate("/home"); 
+        const { role } = response.data; // Get the role from response
+
+        // Redirect based on role
+        if (role === "admin") {
+          navigate("/adminhome"); // Admin page
+        } else {
+          navigate("/home"); // User page
+        }
       }
     } catch (error) {
       console.error(error);

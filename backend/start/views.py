@@ -6,6 +6,10 @@ from rest_framework.response import Response
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 from django.contrib.auth.models import User
+from io import BytesIO
+from bson import Binary
+import base64
+from django.core.exceptions import ValidationError
 
 # MongoDB connection
 client = MongoClient("mongodb+srv://naveensanthosh1213:KSN%40123@admin.hutoj.mongodb.net/")
@@ -53,7 +57,7 @@ def check_email(request):
 @api_view(['POST'])
 def add_product(request):
     """
-    Endpoint to add a new product with image upload.
+    Endpoint to add a new product with image upload as base64 string.
     """
     data = request.data
 
@@ -66,32 +70,55 @@ def add_product(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-    # Handle file upload
-    product_image = request.FILES.get('product_image')
-    if not product_image:
+    # Handle base64 image upload
+    product_image_base64 = data.get('product_image')
+    if not product_image_base64:
         return Response({"detail": "Product image is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Save the file to the media directory
-    file_path = default_storage.save(
-        f'product_images/{product_image.name}',
-        ContentFile(product_image.read())
-    )
+    try:
+        # Decode base64 string to binary (ensure no extra prefix is included)
+        if product_image_base64.startswith("data:image"):
+            product_image_base64 = product_image_base64.split(',')[1]  # Remove data:image/jpeg;base64, part
+        
+        image_data = base64.b64decode(product_image_base64)
 
-    # Build the file URL (if using local storage)
-    file_url = request.build_absolute_uri(default_storage.url(file_path))
+        # Convert binary data to base64 string for response
+        product_image_base64 = base64.b64encode(image_data).decode('utf-8')  # Convert binary data back to base64 string
 
-    # Prepare product data
+    except Exception as e:
+        return Response({"detail": "Invalid image format."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Prepare product data with image as base64 string
     product_data = {
         "product_name": data['product_name'],
-        "product_image": file_url,  # Store the URL of the uploaded image
+        "product_image": product_image_base64,  # Store the image as base64 string
         "product_price": data['product_price'],
         "discount": data['discount'],
         "description": data['description']
     }
 
-    # Insert product into the MongoDB database
-    product_id = products_collection.insert_one(product_data).inserted_id
-    product = products_collection.find_one({"_id": ObjectId(product_id)})
-    product['_id'] = str(product['_id'])  # Convert ObjectId to string for JSON response
+    # Insert product into MongoDB
+    try:
+        product_id = products_collection.insert_one(product_data).inserted_id
+        product = products_collection.find_one({"_id": ObjectId(product_id)})
+        product['_id'] = str(product['_id'])  # Convert ObjectId to string for JSON response
+        return Response(product, status=status.HTTP_201_CREATED)
+    except Exception as e:
+        return Response({"detail": "Error saving product to database."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    return Response(product, status=status.HTTP_201_CREATED)
+
+
+
+@api_view(['GET'])
+def get_products(request):
+    # Fetch products from MongoDB
+    products = list(products_collection.find())
+
+    # Convert ObjectId to string for JSON response
+    for product in products:
+        product['_id'] = str(product['_id'])
+        # If you have binary images, you may want to encode them as base64
+        if isinstance(product.get('product_image'), bytes):
+            product['product_image'] = base64.b64encode(product['product_image']).decode('utf-8')
+
+    return Response(products)
