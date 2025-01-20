@@ -30,7 +30,7 @@ const Home: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-r from-blue-700 via-blue-800 to-black text-white">
       <Header />
       <div className="container mx-auto p-8">
-        <h1 className="text-5xl font-bold text-center mb-6">Welcome to Our Platform</h1>
+        <h1 className="text-5xl font-bold text-center mb-6">Welcome to Our AMAZON</h1>
         <p className="text-lg text-center mb-8">
           This is an example of a home page with a header and footer.
         </p>
