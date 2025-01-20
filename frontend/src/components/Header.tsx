@@ -6,7 +6,7 @@ interface HeaderProps {
   title?: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ title = "Platform" }) => {
+const Header: React.FC<HeaderProps> = ({ title = "AMAZON" }) => {
   return (
     <header className="bg-blue-900 p-4 shadow-lg">
       <div className="container mx-auto flex justify-between items-center">
