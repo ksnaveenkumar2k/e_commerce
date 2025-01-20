@@ -9,6 +9,7 @@ interface Product {
   product_price: number;
   product_image: string;
   description: string;
+  discount: number;
 }
 
 const Home: React.FC = () => {
@@ -49,6 +50,7 @@ const Home: React.FC = () => {
                 <h2 className="text-2xl font-bold">{product.product_name}</h2>
                 <p className="text-lg text-gray-700 mt-2">{product.description}</p>
                 <p className="text-xl font-semibold text-blue-600 mt-4">${product.product_price}</p>
+                <p className="text-xl font-semibold text-red-600 mt-4">discount is ${product.discount}</p>
                 <button className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-white mt-4">
                   Add to Cart
                 </button>
