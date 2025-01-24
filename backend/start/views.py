@@ -122,3 +122,22 @@ def get_products(request):
             product['product_image'] = base64.b64encode(product['product_image']).decode('utf-8')
 
     return Response(products)
+
+
+
+
+
+@api_view(['GET'])
+def get_user_profile(request):
+    user_id = request.query_params.get('userId')
+
+    if not user_id:
+        return Response({'detail': 'User ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user = users_collection.find_one({"_id": ObjectId(user_id)})
+
+    if not user:
+        return Response({'detail': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    user['_id'] = str(user['_id'])
+    return Response(user, status=status.HTTP_200_OK)
